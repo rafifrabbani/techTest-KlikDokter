@@ -1,0 +1,16 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context="com.appschef.hospitalapp.ui.MainActivity">
+    <item
+        android:id="@+id/search"
+        app:showAsAction="ifRoom|collapseActionView"
+        android:icon="@drawable/ic_search_white_24"
+        android:title="Search Hospital"
+        app:actionViewClass="androidx.appcompat.widget.SearchView" />
+    <item
+        android:id="@+id/loginFragment"
+        android:icon="@drawable/ic_account_circle_24"
+        app:showAsAction="ifRoom"
+        android:title="Login" />
+</menu>
