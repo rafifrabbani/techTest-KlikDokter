@@ -45,13 +45,9 @@ class HomeViewModel @Inject constructor(
     }
 
     private fun handleHospitalListResult(result: Result<List<HospitalListItem>>) {
-        try {
-            when (result) {
-                is Result.Success -> setContentState(result.value)
-                is Result.Failure -> setErrorState()
-            }
-        } catch (exception: IOException) {
-            setErrorState()
+        when (result) {
+            is Result.Success -> setContentState(result.value)
+            is Result.Failure -> setErrorState()
         }
     }
 

@@ -2,7 +2,6 @@ package com.appschef.hospitalapp.di
 
 import com.appschef.hospitalapp.data.remote.HospitalAPI
 import com.appschef.hospitalapp.repositories.HospitalRepositoryImpl
-import com.appschef.hospitalapp.util.ConnectivityInteceptor
 import com.appschef.hospitalapp.util.Endpoints
 import dagger.Module
 import dagger.Provides
@@ -22,11 +21,11 @@ object AppModule {
     @Provides
     @Singleton
     fun providesHospitalApi(): HospitalAPI {
-//        val interceptor = HttpLoggingInterceptor()
-//            .setLevel(HttpLoggingInterceptor.Level.BODY)
+        val interceptor = HttpLoggingInterceptor()
+            .setLevel(HttpLoggingInterceptor.Level.BODY)
 
         val okHttp = OkHttpClient.Builder()
-            .addInterceptor(ConnectivityInteceptor())
+            .addInterceptor(interceptor)
             .connectTimeout(30, TimeUnit.SECONDS)
             .writeTimeout(30, TimeUnit.SECONDS)
             .readTimeout(30, TimeUnit.SECONDS)

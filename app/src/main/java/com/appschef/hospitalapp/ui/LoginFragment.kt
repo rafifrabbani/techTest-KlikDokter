@@ -12,6 +12,7 @@ import androidx.navigation.fragment.findNavController
 import com.appschef.hospitalapp.R
 import com.appschef.hospitalapp.databinding.LoginFragmentBinding
 import com.appschef.hospitalapp.util.isNotValidEmail
+import com.appschef.hospitalapp.util.isOnline
 
 class LoginFragment : Fragment(R.layout.login_fragment) {
 
@@ -64,33 +65,41 @@ class LoginFragment : Fragment(R.layout.login_fragment) {
     }
 
     private fun handleLogin() {
-        viewModel.login(
-            binding.edtEmailLogin.text.toString(),
-            binding.edtPassword.text.toString()
-        )
-        viewModel.showProgress.observe(viewLifecycleOwner, { result ->
-            when (result) {
-                true -> {
-                    binding.progressBarLogin.isVisible = true
-                    binding.btnLogin.isVisible = false
+        if (isOnline(requireContext())) {
+            viewModel.login(
+                binding.edtEmailLogin.text.toString(),
+                binding.edtPassword.text.toString()
+            )
+            viewModel.showProgress.observe(viewLifecycleOwner, { result ->
+                when (result) {
+                    true -> {
+                        binding.progressBarLogin.isVisible = true
+                        binding.btnLogin.isVisible = false
+                    }
+                    false -> {
+                        binding.progressBarLogin.isVisible = false
+                        binding.btnLogin.isVisible = true
+                    }
                 }
-                false -> {
-                    binding.progressBarLogin.isVisible = false
-                    binding.btnLogin.isVisible = true
+            })
+            viewModel.showError.observe(viewLifecycleOwner, { result ->
+                if (result == true) {
+                    Toast.makeText(requireContext(), "login failed", Toast.LENGTH_SHORT).show()
+                } else {
+                    findNavController().navigate(R.id.action_loginFragment_to_homeFragment)
                 }
-            }
-        })
-        viewModel.showError.observe(viewLifecycleOwner, { result ->
-            if (result == true) {
-                Toast.makeText(requireContext(), "login failed", Toast.LENGTH_SHORT).show()
-            } else {
-                findNavController().navigate(R.id.action_loginFragment_to_homeFragment)
-            }
-        })
+            })
 
-        viewModel.token.observe(viewLifecycleOwner, {
-            Log.i("loginToken", "currentToken: $it")
-        })
+            viewModel.token.observe(viewLifecycleOwner, {
+                Log.i("loginToken", "currentToken: $it")
+            })
+        } else {
+            Toast.makeText(
+                requireContext(),
+                "login failed \n please check your internet connection",
+                Toast.LENGTH_LONG
+            ).show()
+        }
     }
 
     override fun onDestroyView() {

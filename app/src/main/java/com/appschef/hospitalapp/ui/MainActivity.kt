@@ -1,5 +1,6 @@
 package com.appschef.hospitalapp.ui
 
+import android.content.DialogInterface
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -15,7 +16,7 @@ import com.appschef.hospitalapp.HospitalItemAdapter
 import com.appschef.hospitalapp.R
 import com.appschef.hospitalapp.data.remote.model.HospitalListItem
 import com.appschef.hospitalapp.databinding.ActivityMainBinding
-import com.appschef.hospitalapp.util.InternetService
+import com.appschef.hospitalapp.util.isOnline
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -67,29 +68,7 @@ class MainActivity : AppCompatActivity() {
                         dialog.dismiss()
                     }
                     .setPositiveButton("Accept") { dialog, _ ->
-                        viewModel.deleteHospital(item.id.toInt())
-                        viewModel.deleteItem.observe(this, { result ->
-
-                            when (result) {
-                                true -> {
-                                    dialog.dismiss()
-                                    Toast.makeText(
-                                        this,
-                                        "Successfully delete item",
-                                        Toast.LENGTH_SHORT
-                                    ).show()
-                                    viewModel.getHospitalList()
-                                }
-                                false -> {
-                                    dialog.dismiss()
-                                    Toast.makeText(
-                                        this,
-                                        "delete item failure",
-                                        Toast.LENGTH_SHORT
-                                    ).show()
-                                }
-                            }
-                        })
+                        handleItemDeletion(item, dialog)
                     }
                     .show()
             } else {
@@ -101,6 +80,40 @@ class MainActivity : AppCompatActivity() {
                     .show()
             }
         })
+    }
+
+    private fun handleItemDeletion(item: HospitalListItem, dialog: DialogInterface) {
+        if (isOnline(this)) {
+            viewModel.deleteHospital(item.id.toInt())
+            viewModel.deleteItem.observe(this, { result ->
+
+                when (result) {
+                    true -> {
+                        dialog.dismiss()
+                        Toast.makeText(
+                            this,
+                            "Successfully delete item",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                        viewModel.getHospitalList()
+                    }
+                    false -> {
+                        dialog.dismiss()
+                        Toast.makeText(
+                            this,
+                            "delete item failure",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                }
+            })
+        } else {
+            Toast.makeText(
+                this,
+                "delete failed \n please check your internet connection",
+                Toast.LENGTH_LONG
+            ).show()
+        }
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {

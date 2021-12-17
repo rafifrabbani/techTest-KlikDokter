@@ -1,5 +1,6 @@
 package com.appschef.hospitalapp.ui
 
+import android.content.DialogInterface
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -14,6 +15,7 @@ import com.appschef.hospitalapp.HospitalItemAdapter
 import com.appschef.hospitalapp.R
 import com.appschef.hospitalapp.data.remote.model.HospitalListItem
 import com.appschef.hospitalapp.databinding.HomeFragmentBinding
+import com.appschef.hospitalapp.util.isOnline
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -46,6 +48,10 @@ class HomeFragment : Fragment(R.layout.home_fragment) {
         binding.btnAdd.setOnClickListener {
             findNavController().navigate(R.id.action_homeFragment_to_bottomSheetAddHospital)
         }
+
+        binding.btnRetry.setOnClickListener {
+            loadData()
+        }
     }
 
     private fun loggedInUser() {
@@ -64,22 +70,31 @@ class HomeFragment : Fragment(R.layout.home_fragment) {
     }
 
     private fun loadData() {
-        viewModel.hospitalList.observe(viewLifecycleOwner, { result ->
-            hospitalItemAdapter.submitList(result)
-        })
+        binding.progressBar.isVisible = true
+        if (isOnline(requireContext())) {
+            viewModel.hospitalList.observe(viewLifecycleOwner, { result ->
+                hospitalItemAdapter.submitList(result)
+            })
 
-        viewModel.showContent.observe(viewLifecycleOwner, { result ->
-            when (result) {
-                true -> {
-                    binding.rvHospital.isVisible = true
-                    binding.progressBar.isVisible = false
+            viewModel.showContent.observe(viewLifecycleOwner, { result ->
+                when (result) {
+                    true -> {
+                        binding.rvHospital.isVisible = true
+                        binding.progressBar.isVisible = false
+                        binding.tvPromptUser.isVisible = false
+                        binding.btnRetry.isVisible = false
+                    }
+                    false -> {
+                        binding.rvHospital.isVisible = false
+                        binding.progressBar.isVisible = true
+                    }
                 }
-                false -> {
-                    binding.rvHospital.isVisible = false
-                    binding.progressBar.isVisible = true
-                }
-            }
-        })
+            })
+        } else {
+            binding.progressBar.isVisible = false
+            binding.tvPromptUser.isVisible = true
+            binding.btnRetry.isVisible = true
+        }
     }
 
     private fun directUserToGoogleMaps(item: HospitalListItem) {
@@ -100,29 +115,7 @@ class HomeFragment : Fragment(R.layout.home_fragment) {
                         dialog.dismiss()
                     }
                     .setPositiveButton("Accept") { dialog, _ ->
-                        viewModel.deleteHospital(item.id.toInt())
-                        viewModel.deleteItem.observe(viewLifecycleOwner, { result ->
-
-                            when (result) {
-                                true -> {
-                                    dialog.dismiss()
-                                    Toast.makeText(
-                                        requireContext(),
-                                        "Successfully delete item",
-                                        Toast.LENGTH_SHORT
-                                    ).show()
-                                    viewModel.getHospitalList()
-                                }
-                                false -> {
-                                    dialog.dismiss()
-                                    Toast.makeText(
-                                        requireContext(),
-                                        "delete item failure",
-                                        Toast.LENGTH_SHORT
-                                    ).show()
-                                }
-                            }
-                        })
+                        handleItemDeletion(item, dialog)
                     }
                     .show()
             } else {
@@ -135,6 +128,40 @@ class HomeFragment : Fragment(R.layout.home_fragment) {
             }
         })
 
+    }
+
+    private fun handleItemDeletion(item: HospitalListItem, dialog: DialogInterface) {
+        if (isOnline(requireContext())) {
+            viewModel.deleteHospital(item.id.toInt())
+            viewModel.deleteItem.observe(viewLifecycleOwner, { result ->
+
+                when (result) {
+                    true -> {
+                        dialog.dismiss()
+                        Toast.makeText(
+                            requireContext(),
+                            "Successfully delete item",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                        viewModel.getHospitalList()
+                    }
+                    false -> {
+                        dialog.dismiss()
+                        Toast.makeText(
+                            requireContext(),
+                            "delete item failure",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                }
+            })
+        } else {
+            Toast.makeText(
+                requireContext(),
+                "delete failed \n please check your internet connection",
+                Toast.LENGTH_LONG
+            ).show()
+        }
     }
 
     override fun onDestroyView() {

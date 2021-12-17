@@ -11,6 +11,7 @@ import androidx.navigation.fragment.findNavController
 import com.appschef.hospitalapp.R
 import com.appschef.hospitalapp.databinding.RegisterFragmentBinding
 import com.appschef.hospitalapp.util.isNotValidEmail
+import com.appschef.hospitalapp.util.isOnline
 
 class RegisterFragment : Fragment(R.layout.register_fragment) {
 
@@ -75,29 +76,37 @@ class RegisterFragment : Fragment(R.layout.register_fragment) {
     }
 
     private fun handleRegister() {
-        viewModel.handleRegisterInput(
-            binding.edtRegisterEmail.text.toString(),
-            binding.edtPassword.text.toString()
-        )
-        viewModel.showProgress.observe(viewLifecycleOwner, { result ->
-            when (result) {
-                true -> {
-                    binding.progressBarRegister.isVisible = true
-                    binding.btnRegister.isVisible = false
+        if (isOnline(requireContext())) {
+            viewModel.handleRegisterInput(
+                binding.edtRegisterEmail.text.toString(),
+                binding.edtPassword.text.toString()
+            )
+            viewModel.showProgress.observe(viewLifecycleOwner, { result ->
+                when (result) {
+                    true -> {
+                        binding.progressBarRegister.isVisible = true
+                        binding.btnRegister.isVisible = false
+                    }
+                    false -> {
+                        binding.progressBarRegister.isVisible = false
+                        binding.btnRegister.isVisible = true
+                    }
                 }
-                false -> {
-                    binding.progressBarRegister.isVisible = false
-                    binding.btnRegister.isVisible = true
+            })
+            viewModel.showError.observe(viewLifecycleOwner, { result ->
+                if (result == true) {
+                    Toast.makeText(requireContext(), "register failed", Toast.LENGTH_SHORT).show()
+                } else {
+                    findNavController().navigate(R.id.action_registerFragment_to_loginFragment)
                 }
-            }
-        })
-        viewModel.showError.observe(viewLifecycleOwner, { result ->
-            if (result == true) {
-                Toast.makeText(requireContext(), "register failed", Toast.LENGTH_SHORT).show()
-            } else {
-                findNavController().navigate(R.id.action_registerFragment_to_loginFragment)
-            }
-        })
+            })
+        } else {
+            Toast.makeText(
+                requireContext(),
+                "register failed \n please check your internet connection",
+                Toast.LENGTH_LONG
+            ).show()
+        }
     }
 
     override fun onDestroyView() {

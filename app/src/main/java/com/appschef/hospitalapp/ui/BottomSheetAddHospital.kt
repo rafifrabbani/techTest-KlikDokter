@@ -15,6 +15,7 @@ import androidx.core.widget.doOnTextChanged
 import androidx.fragment.app.activityViewModels
 import com.appschef.hospitalapp.R
 import com.appschef.hospitalapp.databinding.BottomSheetAddHospitalBinding
+import com.appschef.hospitalapp.util.isOnline
 import com.google.android.gms.location.LocationRequest
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -105,24 +106,32 @@ class BottomSheetAddHospital : BottomSheetDialogFragment() {
     }
 
     private fun handleAddHospital() {
-        viewModel.addNewHospital(
-            binding.edtHospitalName.text.toString(),
-            binding.edtLatitude.text.toString().toDouble(),
-            binding.edtLongitude.text.toString().toDouble(),
-            binding.edtAddress.text.toString()
-        )
-        viewModel.showProgress.observe(viewLifecycleOwner, { result ->
-            when(result) {
-                true -> {
-                    homeViewModel.getHospitalList()
-                    Toast.makeText(requireContext(), "success add hospital", Toast.LENGTH_SHORT).show()
-                    dismiss()
+        if (isOnline(requireContext())) {
+            viewModel.addNewHospital(
+                binding.edtHospitalName.text.toString(),
+                binding.edtLatitude.text.toString().toDouble(),
+                binding.edtLongitude.text.toString().toDouble(),
+                binding.edtAddress.text.toString()
+            )
+            viewModel.showProgress.observe(viewLifecycleOwner, { result ->
+                when(result) {
+                    true -> {
+                        homeViewModel.getHospitalList()
+                        Toast.makeText(requireContext(), "success add hospital", Toast.LENGTH_SHORT).show()
+                        dismiss()
+                    }
+                    false -> {
+                        Toast.makeText(requireContext(), "add hospital failed", Toast.LENGTH_SHORT).show()
+                    }
                 }
-                false -> {
-                    Toast.makeText(requireContext(), "add hospital failed", Toast.LENGTH_SHORT).show()
-                }
-            }
-        })
+            })
+        } else {
+            Toast.makeText(
+                requireContext(),
+                "add hospital failed \n please check your internet connection",
+                Toast.LENGTH_LONG
+            ).show()
+        }
     }
 
     override fun onDestroyView() {
